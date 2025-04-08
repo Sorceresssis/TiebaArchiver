@@ -1,12 +1,14 @@
-from typing import Dict, Any
 import os
-import utils.cli_prompt as cli_prompt
+from dataclasses import dataclass
+from typing import Dict, Any
 
+import utils.cli_prompt as cli_prompt
 from utils.json import json_loads_file, json_dumps_file
 
 TIEBA_AUTH_FILENAME = "tieba_auth.json"
 
 
+@dataclass
 class TiebaAuth:
     BDUSS: str = ""
 
@@ -30,3 +32,7 @@ class TiebaAuth:
             bduss = cli_prompt.text("未配置BDUSS, 请输入: ").ask()
             TiebaAuth.BDUSS = bduss
             json_dumps_file(TiebaAuth.to_dict(), tieba_auth_file_path)
+
+
+tieba_auth = TiebaAuth()
+# tieba_auth.load_tieba_auth()

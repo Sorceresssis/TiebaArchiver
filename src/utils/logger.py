@@ -21,7 +21,9 @@ class ScrapeLogger(logging.Logger):
 
 
 def generate_scrape_logger_msg(
-        msg: str = "", label: str | None = None, affiliations: list = []
+        msg: str = "",
+        label: str | None = None,
+        affiliations: list = []
 ):
     return "".join(
         [

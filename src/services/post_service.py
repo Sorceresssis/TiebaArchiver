@@ -63,16 +63,16 @@ class PostService:
         await asyncio.gather(*tasks)
 
         if (
-            PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE
-            or PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_AUTHOR_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE
+                PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE
+                or PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_AUTHOR_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE
         ):
             self.user_dao.delete_user_without_post()
 
     async def fetch_post(
-        self,
-        contact: ProducerConsumerContact,
-        start_pn: int,
-        end_pn: int,
+            self,
+            contact: ProducerConsumerContact,
+            start_pn: int,
+            end_pn: int,
     ) -> None:
         pn = start_pn
 
@@ -123,9 +123,9 @@ class PostService:
                             continue
 
                         if (
-                            PostFilterType.AUTHOR_POSTS_WITH_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE
-                            or PostFilterType.AUTHOR_POSTS_WITH_AUTHOR_SUBPOSTS
-                            == ScrapeConfig.POST_FILTER_TYPE
+                                PostFilterType.AUTHOR_POSTS_WITH_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE
+                                or PostFilterType.AUTHOR_POSTS_WITH_AUTHOR_SUBPOSTS
+                                == ScrapeConfig.POST_FILTER_TYPE
                         ) and (not post.is_thread_author):
                             continue
 
@@ -163,16 +163,17 @@ class PostService:
 
                         # AUTHOR_AND_REPLIED_POSTS_WITH_XXXXX 处理
                         if (not post.is_thread_author) and (
-                            PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_SUBPOSTS
-                            == ScrapeConfig.POST_FILTER_TYPE
-                            or PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_AUTHOR_SUBPOSTS
-                            == ScrapeConfig.POST_FILTER_TYPE
+                                PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_SUBPOSTS
+                                == ScrapeConfig.POST_FILTER_TYPE
+                                or PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_AUTHOR_SUBPOSTS
+                                == ScrapeConfig.POST_FILTER_TYPE
                         ):
                             # len(post.comments) == 0 减少数据库查询
                             if len(post.comments) == 0 or (
-                                not self.post_dao.is_author_replied_post(post.pid, self.scrape_batch_id)
+                                    not self.post_dao.is_author_replied_post(post.pid, self.scrape_batch_id)
                             ):
                                 self.post_dao.delete(post.pid)
+                                # TODO 没有删除 subpost
                                 await self.delete_post_assets(post.pid)
 
                                 subposts_cursor = self.post_dao.query_subposts_by_pid_and_batch_id(
@@ -260,13 +261,13 @@ class PostService:
         MsgPrinter.print_success("", "SavePost", ["floor", post.floor, "pid", post.pid])
 
     async def scrape_comments(
-        self,
-        ppid: int,
-        floor: int,
-        ppn: int,
-        reply_num: int,
-        *,
-        is_update: bool = False,
+            self,
+            ppid: int,
+            floor: int,
+            ppn: int,
+            reply_num: int,
+            *,
+            is_update: bool = False,
     ) -> None:
         queue_maxsize = 8 if reply_num > 8 else reply_num
         producers_num = 1
@@ -340,15 +341,16 @@ class PostService:
                             continue
 
                         if (
-                            PostFilterType.AUTHOR_POSTS_WITH_AUTHOR_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE
-                            or PostFilterType.AUTHOR_POSTS_WITH_AUTHOR_SUBPOSTS
-                            == ScrapeConfig.POST_FILTER_TYPE
+                                PostFilterType.AUTHOR_POSTS_WITH_AUTHOR_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE
+                                or PostFilterType.AUTHOR_POSTS_WITH_AUTHOR_SUBPOSTS
+                                == ScrapeConfig.POST_FILTER_TYPE
                         ) and (not comment.is_thread_author):
                             continue
 
                         await self.user_service.register_user_from_comment_user(comment.user)
-                        # 之前想被回复者一定回出现在楼中楼里，所以没有去把回复者插入数据
-                        # 但是可能回出现被回复在删除自己回复的情况所以这里也要执行insert操作
+
+                        # 之前想;被回复者一定回出现在楼中楼里，所以没有去把回复者插入数据
+                        # 可能会出现被回复在删除自己回复的情况所以这里也要执行insert操作
                         if comment.reply_to_id != 0:
                             await self.user_service.register_user_from_id(comment.reply_to_id)
 

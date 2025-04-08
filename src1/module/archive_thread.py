@@ -1,42 +1,48 @@
-import asyncio
 import os
 import time
-# from ..api.aiotieba_api import get_posts
+
+from api.aiotieba_api import AioTiebaPosts
+from config.path_config import ThreadDataPathBuilder
+from model.metadata import MetaData
 
 
-async def archive_thread(tid: int):
-    # tieba_auth
-    pass
+class ArchiveThread:
+    def __init__(self, posts: AioTiebaPosts, config: dict):
+        self.posts = posts
+        self.path_builder = ThreadDataPathBuilder.from_archive_thread(
+            posts.forum.fname,
+            posts.thread.tid,
+            posts.thread.title
+        )
+        self.config = config
 
-    # scrape_start_time = time.time()
-    # scrape_timestamp = int(scrape_start_time)
-    #
-    # pre_posts = await get_posts(tid, 1)
-    #
-    # if pre_posts is None:
-    #     print()
-    #     # TODO d
-    #     return
-    #
-    # # scrape_path_bulder =
-    # save_path_builder = None
+        timestamp: int
+        batch: int
 
+    async def archive(self):
+        start_time = time.time()
 
-class ScrapeThreadDependent:
-    tid: int
-    # shared_orign:int
-    thead_info: dict
+        self._create_metadata()
 
+        await self._archive_item(self.posts.thread.tid)
 
-    scrape_timestamp: int
-    scrape_batch: int
+        if self.posts.thread.share_origin.tid != 0:
+            await self._archive_item(self.posts.thread.share_origin.tid)
 
-    scrape_config: dict
-    tieba_auth: dict
+        int(start_time)
 
-    content_db = None
-    scrape_logger = None
+        end_time = time.time()
 
+        duration = end_time - start_time
 
+    async def _archive_item(self, tid: int, timestamp: int):
+        os.makedirs(self.path_builder.get_thread_dir(tid), exist_ok=True)
 
-    data_path_builder = None
+        db = self.path_builder.get_content_db_path(tid)
+        logger = self.path_builder.get_scrape_log_path(tid, int(time.time()))
+
+        db.close()
+
+    def _create_metadata(self):
+        self.path_builder.get_metadata_path()
+        MetaData()

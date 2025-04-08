@@ -3,21 +3,158 @@
 import asyncio
 from enum import IntEnum, auto
 
-from module.archive_thread import archive_thread
-
 import utils.cli_prompt as cli_prompt
+from api.aiotieba_api import get_posts
+from config.archive_config import ArchiveConfig
+from module.archive_thread import ArchiveThread
+
 
 # from modules.scrape_module import scrape
 # from modules.scrape_update_module import scrape_update
 # from scrape_config import DownloadUserAvatarMode, ScrapeConfig, ScrapeConfigKeys, PostFilterType
 # from tieba_auth import TiebaAuth
 # from utils.cli_questionary import InfoStyle
-from utils.common import counter_gen
+
+
+# from module.archive_thread import archive_thread
 
 # from utils.msg_printer import PrintColor
 
-counter = counter_gen()
-next(counter)  # 预激一次生成器
+# counter = counter_gen()
+# next(counter)  # 预激一次生成器
+
+
+class ProgramFeatures(IntEnum):
+    ARCHIVE_THREAD = auto()
+    ARCHIVE_THREADS = auto()
+
+    UPDATE_ARCHIVED_THREAD = auto()
+    UPDATE_ARCHIVED_THREADS = auto()
+
+    EXPORT_TO_READABLE = auto()
+
+    MODIFY_CONFIG = auto()
+    MODIFY_TIEBA_AUTH = auto()
+    EXIT = auto()
+
+    ARCHIVE_USER_THREADS = auto()  # 归档用户的主题帖
+    ARCHIVE_USER_THREADS_BYPASS = auto()  # 归档用户主题帖（绕过用户隐藏，不一定能成功，且耗时。）
+
+    # 更新1： 更新已经归档的主题帖， 添加没有归档的主题帖。
+    # UPDATE_ARCHIVED_USER_THREADS = auto() # 更新已归档用户的主题帖
+    # UPDATE_ARCHIVED_USER_THREADS_BYPASS = auto()
+    #
+    # ARCHIVED_USER_THREADS_AND_POST_THREADS = auto()
+    # UPDATE_ARCHIVED_USER_THREADS_AND_POST_THREADS = auto()
+
+
+program_features: list[dict] = [
+    {
+        "value": ProgramFeatures.ARCHIVE_THREAD,
+        "title": "💾 归档单个帖子",
+    },
+    {
+        "value": ProgramFeatures.ARCHIVE_THREADS,
+        "title": "💾 批量归档帖子",
+    },
+    {
+        "value": ProgramFeatures.UPDATE_ARCHIVED_THREAD,
+        "title": "🔄 更新已归档帖子",
+    },
+    {
+        "value": ProgramFeatures.UPDATE_ARCHIVED_THREADS,
+        "title": "🔄 批量更新已归档帖子",
+    },
+    {
+        "value": ProgramFeatures.EXPORT_TO_READABLE,
+        "title": "📄 导出归档数据为可读文件",
+    },
+    {
+        "value": ProgramFeatures.MODIFY_CONFIG,
+        "title": "⚙️ 修改归档配置",
+    },
+    {
+        "value": ProgramFeatures.MODIFY_TIEBA_AUTH,
+        "title": "🔑 更新贴吧登录信息",
+    },
+    {
+        "value": ProgramFeatures.EXIT,
+        "title": "🚪 退出程序",
+    },
+    {
+        "value": ProgramFeatures.ARCHIVE_USER_THREADS,
+        "title": "👤 归档用户的主题帖",
+        "disabled": "未实现"
+    },
+]
+
+
+async def archive_thread(tid, config):
+    # tieba_auth
+    # config
+
+    # verification_posts
+    v_posts = await get_posts(tid, 1)
+    if v_posts is None:
+        "\n".join(
+            [
+                "预加载错误，可能是以下原因:",
+                "1. 连接错误，请多尝试几次。",
+                "2. 网络故障，请检查网络。",
+                "3. tid 错误, 请检查是否输入正确",
+                "4. 帖子可能已被屏蔽或删除",
+                "5. BDUSS 失效，请重新配置",
+            ]
+        ),
+        return
+
+    archiver = ArchiveThread(v_posts, {})
+    await archiver.archive()
+
+
+def main():
+    features_select = cli_prompt.select(
+        "选择功能",
+        choices=list(map(lambda x: cli_prompt.Choice(
+            f"{x['value']}. {x['title']}", x['value'], x['disabled'] if 'disabled' in x else None
+        ), program_features)),
+    )
+
+    while True:
+        selected_features = features_select.ask()
+
+        if ProgramFeatures.ARCHIVE_THREAD == selected_features:
+            config = {}
+            # 可视化配置
+            print(ArchiveConfig().insight())
+            tid_str = cli_prompt.text("请输入帖子的tid: ").ask()
+            if not tid_str.isdigit():
+                print(f"tid 必须为整数")
+                continue
+            tid = int(tid_str)
+            asyncio.run(archive_thread(tid, config))
+        elif ProgramFeatures.UPDATE_ARCHIVED_THREAD == selected_features:
+            path = input("请输入本地帖子数据的路径: ")
+            # asyncio.run()
+            # read_tieba_auth()
+            # read_scrape_config()
+            # path = input("请输入本地帖子数据的路径: ")
+            # asyncio.run(scrape_update(path))
+        elif ProgramFeatures.EXPORT_TO_READABLE == selected_features:
+            pass
+            # print(f"{PrintColor.RED}该功能尚未实现{PrintColor.RESET}")
+        elif ProgramFeatures.MODIFY_CONFIG == selected_features:
+
+            pass
+        elif ProgramFeatures.MODIFY_TIEBA_AUTH == selected_features:
+            pass
+        elif ProgramFeatures.EXIT == selected_features:
+            break
+
+
+if __name__ == "__main__":
+    main()
+
 
 # TIEBA_AUTH_FILENAME = "tieba_auth.json"
 
@@ -39,26 +176,25 @@ next(counter)  # 预激一次生成器
 # scrape_config_file_path = os.path.join(os.getcwd(), SCRAPE_CONFIG_FILENAME)
 
 
-# def read_scrape_config() -> None:
-#     try:
-#         with open(scrape_config_file_path, "r", encoding="utf-8") as f:
-#             ScrapeConfig.from_dict(orjson.loads(f.read()))
-#     except FileNotFoundError:
-#         if questionary.confirm("未找到配置文件, 是否使用默认配置并生成文件?").ask():
-#             write_scrape_config()
-#         else:
-#             sys.exit()
-#     except orjson.JSONDecodeError:
-#         if questionary.confirm("配置文件格式错误导致解析失败, 是否使用默认配置并生成文件?").ask():
-#             write_scrape_config()
-#         else:
-#             sys.exit()
-#     except ValueError as err:
-#         if questionary.confirm(f"配置变量错误: {str(err)}, 是否使用默认配置并生成文件?").ask():
-#             write_scrape_config()
-#         else:
-#             sys.exit()
-
+def read_scrape_config() -> None:
+    try:
+        with open(scrape_config_file_path, "r", encoding="utf-8") as f:
+            ScrapeConfig.from_dict(orjson.loads(f.read()))
+    except FileNotFoundError:
+        if questionary.confirm("未找到配置文件, 是否使用默认配置并生成文件?").ask():
+            write_scrape_config()
+        else:
+            sys.exit()
+    except orjson.JSONDecodeError:
+        if questionary.confirm("配置文件格式错误导致解析失败, 是否使用默认配置并生成文件?").ask():
+            write_scrape_config()
+        else:
+            sys.exit()
+    except ValueError as err:
+        if questionary.confirm(f"配置变量错误: {str(err)}, 是否使用默认配置并生成文件?").ask():
+            write_scrape_config()
+        else:
+            sys.exit()
 
 # def write_scrape_config() -> None:
 #     with open(scrape_config_file_path, "w", encoding="utf-8") as f:
@@ -147,87 +283,3 @@ next(counter)  # 预激一次生成器
 #             write_scrape_config()
 #         elif "exit" == scrape_config_key:
 #             break
-
-
-class ProgramFeatures(IntEnum):
-    ARCHIVE_THREAD = auto()
-    UPDATE_ARCHIVED_THREAD = auto()
-
-    # ARCHIVE_USER_THREADS = auto() # 归档用户的主题帖
-    # 更新1： 更新已经归档的主题帖， 添加没有归档的主题帖。
-    # UPDATE_ARCHIVED_USER_THREADS = auto() # 更新已归档用户的主题帖
-    # ARCHIVE_USER_THREADS_BYPASS = auto() # 归档用户主题帖（绕过用户隐藏，不一定能成功，且耗时。）
-    # UPDATE_ARCHIVED_USER_THREADS_BYPASS = auto()
-    #
-    # ARCHIVED_USER_THREADS_AND_POST_THREADS = auto()
-    # UPDATE_ARCHIVED_USER_THREADS_AND_POST_THREADS = auto()
-
-    EXPORT_TO_READABLE = auto()
-
-    MODIFY_SCRAPE_CONFIG = auto()
-    MODIFY_TIEBA_AUTH = auto()
-    EXIT = auto()
-
-
-def main():
-    features_choices = [
-        cli_prompt.Choice(
-            f"{ProgramFeatures.ARCHIVE_THREAD}. 爬取并归档帖子",
-            ProgramFeatures.ARCHIVE_THREAD
-        ),
-        cli_prompt.Choice(
-            f"{ProgramFeatures.UPDATE_ARCHIVED_THREAD}. 更新已归档帖子（附加新数据）",
-            ProgramFeatures.UPDATE_ARCHIVED_THREAD,
-        ),
-        cli_prompt.Choice(
-            f"{ProgramFeatures.EXPORT_TO_READABLE}. 导出归档数据为可读文件",
-            ProgramFeatures.EXPORT_TO_READABLE,
-        ),
-        cli_prompt.Choice(
-            f"{ProgramFeatures.MODIFY_SCRAPE_CONFIG}. 修改爬取配置",
-            ProgramFeatures.MODIFY_SCRAPE_CONFIG,
-        ),
-        cli_prompt.Choice(
-            f"{ProgramFeatures.MODIFY_TIEBA_AUTH}. 更新贴吧登录信息（BDUSS）",
-            ProgramFeatures.MODIFY_TIEBA_AUTH,
-        ),
-        cli_prompt.Choice(
-            f"{ProgramFeatures.EXIT}. 退出程序",
-            ProgramFeatures.EXIT,
-        )
-    ]
-    features_select = cli_prompt.select(
-        "选择功能",
-        choices=features_choices,
-    )
-
-    while True:
-        selected_features = features_select.ask()
-
-        if ProgramFeatures.ARCHIVE_THREAD == selected_features:
-            tid_str = cli_prompt.text("请输入帖子的tid: ").ask()
-            if not tid_str.isdigit():
-                print(f"tid 必须为整数")
-                continue
-            asyncio.run(archive_thread(int(tid_str)))
-        elif ProgramFeatures.UPDATE_ARCHIVED_THREAD == selected_features:
-            path = input("请输入本地帖子数据的路径: ")
-            # asyncio.run()
-            # read_tieba_auth()
-            # read_scrape_config()
-            # path = input("请输入本地帖子数据的路径: ")
-            # asyncio.run(scrape_update(path))
-        elif ProgramFeatures.EXPORT_TO_READABLE == selected_features:
-            pass
-            # print(f"{PrintColor.RED}该功能尚未实现{PrintColor.RESET}")
-        elif ProgramFeatures.MODIFY_SCRAPE_CONFIG == selected_features:
-
-            pass
-        elif ProgramFeatures.MODIFY_TIEBA_AUTH == selected_features:
-            pass
-        elif ProgramFeatures.EXIT == selected_features:
-            break
-
-
-if __name__ == "__main__":
-    main()

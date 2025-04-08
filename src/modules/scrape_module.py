@@ -77,7 +77,7 @@ async def scrape(tid: int):
 
 
 async def scrape_thread(
-    tid: int, *, is_share_origin: bool = False, share_origin: ShareThread_pt | None = None
+        tid: int, *, is_share_origin: bool = False, share_origin: ShareThread_pt | None = None
 ):
     if tid <= 0:
         return
@@ -85,8 +85,6 @@ async def scrape_thread(
     Container.set_tid(tid)
     scrape_data_path_builder = Container.get_scrape_data_path_builder()
     os.makedirs(scrape_data_path_builder.get_thread_dir(tid), exist_ok=True)
-    content_db = Container.get_content_db()
-    scrape_logger = Container.get_scrape_logger()
 
     def final_treatment():
         content_db.close()

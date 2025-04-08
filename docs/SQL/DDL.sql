@@ -51,7 +51,7 @@ CREATE INDEX 'idx_post(scrape_batch_id)' ON post(scrape_batch_id);-- (v1.3.1)新
 DROP TABLE IF EXISTS 'user';
 CREATE TABLE user
 (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    id          INTEGER PRIMARY KEY AUTOINCREMENT, -- 古早用户可能只有 p 没有 id
     portrait    TEXT    DEFAULT NULL NULL,   -- portrait 按理来讲不应该设置 NULL 的。但是要适配获取 FragAT 用户时数据请求不到的情况。
     username    TEXT    DEFAULT NULL NULL,
     nickname    TEXT               NOT NULL, -- nick_name_new > nickname_old

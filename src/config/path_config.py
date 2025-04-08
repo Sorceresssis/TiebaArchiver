@@ -10,7 +10,8 @@ def sanitize_filename(filename: str) -> str:
     要注意, 返回的可能是空字符串
     """
 
-    invalid_chars = r'[<>:"/\\|?*]'
+    # invalid_chars = r'[<>:"/\\|?*]'
+    invalid_chars = r'[<>:"/\\|?*\n\r\t]'
     sanitized_filename = re.sub(invalid_chars, "", filename)
     return sanitized_filename
 

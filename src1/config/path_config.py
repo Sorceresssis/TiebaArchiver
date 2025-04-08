@@ -1,7 +1,8 @@
 import os
 from os import path
-from ..utils.common import get_timestamp
-from ..utils.fs import sanitize_filename
+
+from utils.common import get_timestamp
+from utils.fs import sanitize_filename
 
 DATA_FOLDER_NAME = "scraped_data"
 
@@ -12,11 +13,11 @@ class ThreadDataPathBuilder:
         self.item_dir = item_dir
 
     @classmethod
-    def from_scrape_thread(cls, f_name: str, t_id: int, t_title: str) -> "ThreadDataPathBuilder":
+    def from_archive_thread(cls, fname: str, tid: int, title: str) -> "ThreadDataPathBuilder":
         item_dir = path.join(
             os.getcwd(),
             DATA_FOLDER_NAME,
-            cls.gen_thread_data_folder_name(f_name, t_id, t_title),
+            cls.gen_thread_data_folder_name(fname, tid, title),
         )
         os.makedirs(item_dir, exist_ok=True)
         return ThreadDataPathBuilder(item_dir)
@@ -35,8 +36,11 @@ class ThreadDataPathBuilder:
         return ThreadDataPathBuilder(item_dir)
 
     @staticmethod
-    def gen_thread_data_folder_name(f_name: str, t_id: int, t_title: str) -> str:
+    def get_thread_data_folder_name(f_name: str, t_id: int, t_title: str) -> str:
         return f"[{f_name}吧][{t_id}]{sanitize_filename(t_title)}_{get_timestamp()}"
+
+    def get_metadata_path(self) -> str:
+        return path.join(self.item_dir, "metadata.json")
 
     def get_scrape_info_path(self) -> str:
         return path.join(self.item_dir, "scrape_info.json")
