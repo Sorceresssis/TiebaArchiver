@@ -1,8 +1,8 @@
 import aiotieba as tb
-
 from scrape_config import ScrapeConfig, PostFilterType
-from tieba_auth import TiebaAuth
 from utils.msg_printer import MsgPrinter
+
+from config.tieba_auth import TiebaAuth
 
 
 async def get_forum(fname_or_fid: str | int, retry=3):

@@ -1,10 +1,7 @@
 from typing import Sequence, Any
 
-from prompt_toolkit.styles import Style
-
 import questionary
-
-from questionary import Choice
+from prompt_toolkit.styles import Style
 
 WarningStyle = Style([
     ('qmark', 'fg:red bold'),  # 问号用红色加粗表示警告
@@ -40,8 +37,17 @@ PromptStyle = Style([
     ('answer', 'fg:cyan bold'),
     ('selected', 'fg:cyan bold'),
 ])
-SELECT_STYLE = Style([
 
+SELECT_STYLE = Style([
+    ('qmark', 'fg:cyan bold'),
+    ('question', 'fg:cyan bold'),
+    ('pointer', 'fg:cyan bold'),
+])
+
+TEXT_STYLE = Style([
+    ('qmark', 'fg:cyan bold'),
+    ('question', 'fg:#ffffff bold'),
+    ('answer', 'fg:#ffffff bold'),
 ])
 
 CONFIRM_STYLE = Style([])
@@ -64,31 +70,21 @@ prompt_style = Style([
 ])
 
 
-def select(message: str, choices: Sequence[str | questionary.Choice | dict[str, Any]]):
-    return questionary.select(
-        message,
-        choices=choices,
-        style=SELECT_STYLE
-    )
+class CliPrompt:
+    Choice = questionary.Choice
 
+    @staticmethod
+    def select(msg: str, choices: Sequence[str | questionary.Choice | dict[str, Any]]):
+        return questionary.select(msg, choices=choices, style=SELECT_STYLE)
 
-def confirm(message: str, ):
-    return questionary.confirm(
-        message,
-        style=CONFIRM_STYLE
-    )
+    @staticmethod
+    def text(msg: str):
+        return questionary.text(msg, style=TEXT_STYLE)
 
+    @staticmethod
+    def confirm(msg: str):
+        return questionary.confirm(msg, style=CONFIRM_STYLE)
 
-def text(message: str, ):
-    return questionary.text(
-        message,
-        style=PromptStyle
-    )
-
-
-__all__ = [
-    select,
-    confirm,
-    text,
-    Choice
-]
+    @staticmethod
+    def print(msg: str):
+        questionary.print(msg)

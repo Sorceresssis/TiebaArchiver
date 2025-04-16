@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import Dict, Any
 
 
-class DownloadUserAvatar(StrEnum):
+class UserAvatarSave(StrEnum):
     NO = "no"
     LOW = "low"
     HIGH = "high"
@@ -11,9 +11,9 @@ class DownloadUserAvatar(StrEnum):
     @property
     def label(self) -> str:
         return {
-            DownloadUserAvatar.NO: "不下载",
-            DownloadUserAvatar.LOW: "低清",
-            DownloadUserAvatar.HIGH: "高清",
+            UserAvatarSave.NO: "不下载",
+            UserAvatarSave.LOW: "低清",
+            UserAvatarSave.HIGH: "高清",
         }[self]
 
 
@@ -42,39 +42,35 @@ class PostFilter(StrEnum):
 
 @dataclass
 class ArchiveConfig:
-    # 全适用
-    save_user_extra_info: bool = True
+    # All
     post_filter: PostFilter = PostFilter.ALL
-    download_user_avatar: DownloadUserAvatar = DownloadUserAvatar.HIGH
-
-    # fist
+    user_avatar_save: UserAvatarSave = UserAvatarSave.HIGH
     archive_share_origin: bool = True
 
-    # update
-    update_share_origin: bool = True  # 如果 archive_share_origin为 False, 则不更新 share_origin
-    fill_missing_share_origin: bool = False  # 是否追加 share_origin, 如果初次archive 时没有 archive_share_origin
-    update_user_info: bool = False  # 更新用户的 nickname, sign, traffic 信息.不包含avatar
+    # First Archive
+
+    # Update Archive
+    update_share_origin: bool = True  # 仅当 archive_share_origin 为 True 时，此配置项才生效
 
     def insight(self) -> str:
+        # TODO 展示
         return "\n".join([
-            f"保存用户额外信息(save_user_extra_info): {self.save_user_extra_info}({self.save_user_extra_info})",
-            f"post_filter: {self.post_filter.label}",
-            f"download_user_avatar: {self.download_user_avatar.label}",
-            f"archive_share_origin: {self.archive_share_origin}",
-            f"update_share_origin: {self.update_share_origin}",
-            f"fill_missing_share_origin: {self.fill_missing_share_origin}",
+            f"回复帖筛选方式(post_filter): {self.post_filter.label}",
+            f"头像保存设置(user_avatar_save): {self.user_avatar_save.label}",
+            f"是否保留帖子来源信息(archive_share_origin): {self.archive_share_origin}",
+            f"更新转发原主题帖(update_share_origin): {self.update_share_origin}",
         ])
 
     @staticmethod
     def from_dict(data: Dict[str, Any]):
-        return ArchiveConfig(
-            save_user_extra_info=data.get("save_user_extra_info", True),
-            post_filter=PostFilter(data.get("post_filter", PostFilter.ALL)),
-            download_user_avatar=DownloadUserAvatar(data.get("download_user_avatar", DownloadUserAvatar.HIGH)),
-            archive_share_origin=data.get("archive_share_origin", True),
-            update_share_origin=data.get("update_share_origin", True),
-        )
-
-
-if __name__ == "__main__":
-    print(ArchiveConfig().insight())
+        # TODO 验证
+        try:
+            return ArchiveConfig(
+                post_filter=PostFilter(data.get("post_filter", PostFilter.ALL)),
+                user_avatar_quality=UserAvatarQuality(data.get("download_user_avatar", UserAvatarQuality.HIGH)),
+                archive_share_origin=data.get("archive_share_origin", True),
+                update_share_origin=data.get("update_share_origin", True),
+            )
+        except Exception as e:
+            print(e)
+            raise ValueError("Invalid archive config")

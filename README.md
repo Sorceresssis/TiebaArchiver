@@ -1,28 +1,41 @@
-# TiebaScraper
+# TiebaArchiver
 
-基于 [aiotieba]() 开发的贴吧的帖子爬取工具，最大程度的保留原始内容。并且支持对图片、视频、语音等媒体文件的下载。
+TiebaArchiver 是一款基于百度贴吧移动端 API（aiotieba）开发的主题帖归档工具。
 
-适用与个人，少量数据。
+该工具旨在尽可能完整地保留原帖内容，并支持下载图片、视频、语音等多种媒体资源。
+
+它非常适合个人用户进行贴吧内容的备份与整理。
+
+## 功能介绍
+
+### 1. 归档主题帖
+
+基础功能，把主题帖的内容保存到本地。
+
+### 2. 更新已归档的主题帖
+
+更新本地已归档的数据, 此过程会将主题帖新增的回复融入本地数据中。对于已被删除的回复帖，会继续保留在本地中。实现数据的持续扩充和更新,最大程度地保留数据。
+
+### 3. 根据归档数据导出为易读的文件（开发中）
+
+输出为易读的文件，方便阅读，无需再依赖 [ForumReader](https://github.com/Sorceresssis/TiebaReader)。类似于 telegram 的导出格式。
+
+### 4. 归档用户的所有帖子（开发中）
+
+此功能会根据用户名自动获取用户所有帖子，并保存到本地。
 
 ## 提前须知
 
 ### 1. 如何阅读爬取到的数据
 
-[TiebaReader](https://github.com/Sorceresssis/TiebaReader)是为本项目配套的阅读器。
+1. [ForumReader](https://github.com/Sorceresssis/TiebaReader)是为本项目配套的阅读器。
+2. 导出为易读的文件
 
 ### 2. 爬取时会出现的问题
 
 1. 有时第一次运行会出现连接错误，多试几次即可。
 2. 已经注销的用户保存的数据会有缺失。
 3. auth 过期 可以替换 auth
-
-## 功能介绍
-
-### 1. 爬取帖子
-
-### 2. append new posts
-
-为什么
 
 ## 普通用户使用教程
 
@@ -143,5 +156,5 @@ tid 类似于帖子的身份证。你可以从帖子的 url 中获取到它
 
 感谢这些项目作者的帮助。
 
--   [Starry-OvO/aiotieba: Asynchronous I/O Client for Baidu Tieba](https://github.com/Starry-OvO/aiotieba)
--   [n0099/tbclient.protobuf: 百度贴吧客户端 Protocol Buffers 定义文件合集](https://github.com/n0099/tbclient.protobuf)
+- [Starry-OvO/aiotieba: Asynchronous I/O Client for Baidu Tieba](https://github.com/Starry-OvO/aiotieba)
+- [n0099/tbclient.protobuf: 百度贴吧客户端 Protocol Buffers 定义文件合集](https://github.com/n0099/tbclient.protobuf)

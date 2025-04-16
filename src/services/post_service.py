@@ -44,7 +44,12 @@ class PostService:
         producers_num = min(max_producers_num, total_page)
         consumers_num = 8
         consumer_await_timeout = 8
-        contact = ProducerConsumerContact(queue_maxsize, producers_num, consumers_num, consumer_await_timeout)
+        contact = ProducerConsumerContact(
+            queue_maxsize,
+            producers_num,
+            consumers_num,
+            consumer_await_timeout
+        )
 
         pages_per_producer = math.ceil(total_page / producers_num)
 
@@ -62,6 +67,7 @@ class PostService:
 
         await asyncio.gather(*tasks)
 
+        # TODO 什么意思， 
         if (
                 PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE
                 or PostFilterType.AUTHOR_AND_REPLIED_POSTS_WITH_AUTHOR_SUBPOSTS == ScrapeConfig.POST_FILTER_TYPE

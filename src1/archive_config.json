@@ -1,0 +1,9 @@
+{
+  "save_user_extra_info": true,
+  "post_filter": "all",
+  "download_user_avatar": "high",
+  "archive_share_origin": true,
+  "update_share_origin": true,
+  "fill_missing_share_origin": false,
+  "update_user_info": false
+}

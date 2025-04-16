@@ -6,10 +6,10 @@ from enum import IntEnum, auto
 import orjson
 import questionary
 
+from config.tieba_auth import TiebaAuth
 from modules.scrape_module import scrape
 from modules.scrape_update_module import scrape_update
 from scrape_config import DownloadUserAvatarMode, ScrapeConfig, ScrapeConfigKeys, PostFilterType
-from tieba_auth import TiebaAuth
 from utils.cli_questionary import InfoStyle
 from utils.common import counter_gen, json_dumps
 from utils.msg_printer import PrintColor

@@ -52,6 +52,7 @@ class ContentService:
         self.tid = Container.get_tid()
         self.scrape_data_path_builder = Container.get_scrape_data_path_builder()
         self.scrape_logger = Container.get_scrape_logger()
+
         self.tieba_origin_src_dao = TiebaOriginSrcDao()
         self.userService = UserService()
         self.post_image_dir = self.scrape_data_path_builder.get_post_image_dir(self.tid)

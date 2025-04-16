@@ -1,11 +1,3 @@
-import time
-
-
-def get_timestamp() -> int:
-    timestamp = int(time.time() * 1000000)
-    return timestamp
-
-
 def counter_gen(start=0, step=1):
     while True:
         start += step
