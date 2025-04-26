@@ -1,29 +1,40 @@
 from dataclasses import dataclass
 from enum import IntEnum, auto
+from typing import Dict
 
 
 class ContentFragType(IntEnum):
-    """
-    text
-    emojis
-    imgs
-    ats
-    links
-    tiebapluses
-    video	视频碎片
-    voice
-    """
+    ERROR = -1
 
-    TEXT = auto()
+    TEXT = 1
     EMOJI = auto()
     IMAGE = auto()
     AT = auto()
     LINK = auto()
-    TIEBAPLUS = auto()
+    TIEBA_PLUS = auto()
     VIDEO = auto()
     VOICE = auto()
 
-    SCRAPE_ERROR = -1
+    @classmethod
+    def labels(cls) -> Dict['ContentFragmentType', str]:
+        if not hasattr(cls, '_label_map'):
+            cls._label_map = {
+                cls.ERROR: "error",
+                cls.TEXT: "text",
+                cls.EMOJI: "emoji",
+                cls.IMAGE: "image",
+                cls.AT: "at",
+                cls.LINK: "link",
+                cls.TIEBA_PLUS: "tieba_plus",
+                cls.VIDEO: "video",
+                cls.VOICE: "voice",
+            }
+        return cls._label_map
+
+    @property
+    def label(self) -> str:
+        """获取标准化类型标签（兼容旧版数据）"""
+        return self.labels().get(self)
 
 
 @dataclass
@@ -33,9 +44,9 @@ class ContentFrag:
 
 # NOTE 这是一个非常特殊的frag, 它不是贴吧原有的内容, 而是用于标记爬取过程中出现错误的分块
 @dataclass
-class FragScrapeError(ContentFrag):
+class FragError(ContentFrag):
     error_frag_type: int
-    error_frag_name: str
+    error_frag_label: str
 
 
 @dataclass

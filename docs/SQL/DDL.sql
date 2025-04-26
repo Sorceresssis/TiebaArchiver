@@ -1,125 +1,167 @@
--- (v1.3.0) 新增
 DROP TABLE IF EXISTS db_info;
 CREATE TABLE db_info
 (
     k TEXT PRIMARY KEY,
     v TEXT NOT NULL
 );
-INSERT INTO db_info
-VALUES ('scraper_version', ''),
-       ('tid', '');
 
 
--- (v1.3.1) 新增
-DROP TABLE IF EXISTS scrape_batch;
-CREATE TABLE scrape_batch
+DROP TABLE IF EXISTS batch;
+CREATE TABLE batch
 (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    scraper_version TEXT    NOT NULL,
-    scrape_config   TEXT    NOT NULL,
-    scrape_time     INTEGER NOT NULL
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    version TEXT    NOT NULL,
+    time    INTEGER NOT NULL,
+    config  TEXT    NOT NULL
+);
+
+
+DROP TABLE IF EXISTS content_fragment_type;
+CREATE TABLE content_fragment_type
+(
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    label TEXT NOT NULL
 );
 
 
 DROP TABLE IF EXISTS post;
 CREATE TABLE post
 (
-    id               INTEGER PRIMARY KEY AUTOINCREMENT,
-    contents         TEXT               NOT NULL, -- json [{ type: 1, }]
-    floor            INTEGER            NOT NULL, -- 楼和楼中楼一样
-    user_id          INTEGER            NOT NULL,
-    agree            INTEGER DEFAULT 0  NOT NULL,
-    disagree         INTEGER DEFAULT 0  NOT NULL,
-    create_time      INTEGER            NOT NULL, -- 创建时间，要依赖爬取的时间
-    is_thread_author BOOLEAN DEFAULT 0  NOT NULL, -- 冗余字段， 区分楼主和普通用户
-    sign             TEXT    DEFAULT '' NOT NULL, -- 小尾巴，post独有,
-    reply_num        INTEGER DEFAULT 0  NOT NULL, -- 楼独有，冗余字段，不需要join。
-    parent_id        INTEGER DEFAULT 0  NOT NULL, -- 楼中楼独有, 区分普通楼和楼中的唯一标识 "where parent_id == 0"
-    reply_to_id      INTEGER DEFAULT 0  NOT NULL, -- 楼中楼独有，不是所有的楼中楼都有reply_to_id。回复给谁,是uid不是 pid。
+    id               INTEGER PRIMARY KEY,
+    contents         TEXT                 NOT NULL, -- json [{ type: 1, }]
+    floor            INTEGER              NOT NULL, -- 楼序号，post 与其 subpost floor 相同
 
-    scrape_batch_id  INTEGER DEFAULT 0  NOT NULL  -- (v1.3.1 - 新增) 关联 scrape_batch.id
+    agree            INTEGER DEFAULT 0    NOT NULL,
+    disagree         INTEGER DEFAULT 0    NOT NULL,
+    create_time      INTEGER              NOT NULL,
+    is_thread_author BOOLEAN DEFAULT 0    NOT NULL, -- 楼主发的post
+
+    sign             TEXT    DEFAULT ''   NOT NULL, -- post独有. 小尾巴，原本是支持图片的，在web端可以正常显示.
+    reply_num        INTEGER DEFAULT 0    NOT NULL, -- post独有. 被回复的次数.
+
+    parent_id        INTEGER DEFAULT 0    NOT NULL, -- subpost独有, 区分 post和 subpost 的唯一标识
+    reply_to_id      INTEGER DEFAULT 0    NOT NULL, -- subpost独有，表示回复的用户不是回复的subpost, 因此贴吧帖子不是树状结构。
+    thread_id        INTEGER              NOT NULL,
+    author_id        INTEGER DEFAULT NULL NULL,
+    portrait         TEXT                 NOT NULL, -- 兼容古早用户没有 user_id 只有 portrait的情况
+
+    batch            INTEGER              NOT NULL,
+    update_batch     INTEGER              NOT NULL
 );
 CREATE INDEX 'idx_post(floor)' ON post (floor);
-CREATE INDEX 'idx_post(user_id)' ON post (user_id);
-CREATE INDEX 'idx_post(agree)' ON post (agree); -- 根据点赞数排序
-CREATE INDEX 'idx_post(create_time)' ON post (create_time); -- 根据创建时间排序
-CREATE INDEX 'idx_post(is_thread_author)' ON post (is_thread_author); -- 根据楼主和普通用户区分
+CREATE INDEX 'idx_post(agree)' ON post (agree);
+CREATE INDEX 'idx_post(create_time)' ON post (create_time);
+CREATE INDEX 'idx_post(is_thread_author)' ON post (is_thread_author);
 CREATE INDEX 'idx_post(parent_id)' ON post (parent_id);
-CREATE INDEX 'idx_post(scrape_batch_id)' ON post(scrape_batch_id);-- (v1.3.1)新增
+CREATE INDEX 'idx_post(thread_id)' ON post (thread_id);
+CREATE INDEX 'idx_post(author_id)' ON post (author_id);
+CREATE INDEX 'idx_post(portrait)' ON post (portrait);
+CREATE INDEX 'idx_post(batch)' ON post (batch);
+CREATE INDEX 'idx_post(update_batch)' ON post (update_batch);
+
+
+DROP TABLE IF EXISTS at_user;
+CREATE TABLE at_user
+(
+    pid INTEGER NOT NULL,
+    uid INTEGER NOT NULL
+);
+CREATE INDEX 'idx_at_user(pid)' ON at_user (pid);
+CREATE INDEX 'idx_at_user(uid)' ON at_user (uid);
 
 
 DROP TABLE IF EXISTS 'user';
 CREATE TABLE user
 (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT, -- 古早用户可能只有 p 没有 id
-    portrait    TEXT    DEFAULT NULL NULL,   -- portrait 按理来讲不应该设置 NULL 的。但是要适配获取 FragAT 用户时数据请求不到的情况。
-    username    TEXT    DEFAULT NULL NULL,
-    nickname    TEXT               NOT NULL, -- nick_name_new > nickname_old
-    tieba_uid   INTEGER DEFAULT NULL NULL,   -- get_userinfo()
+    id           INTEGER DEFAULT NULL NULL,     -- 古早ip用户只有 portrait, 没有 user_id， 不能设置为主键。
+    portrait     TEXT    DEFAULT NULL NULL,     -- portrait按理讲是一定存在的。但是获取FragAT用户、reply_id可能已无法正常查询到数据，进而无法获取到protrait。
+    tieba_uid    INTEGER DEFAULT NULL NULL,     -- 老用户可能没有tieba_uid(get_userinfo)
+    username     TEXT    DEFAULT ''   NOT NULL, -- 不是所有用户都有，而且爬取到的是经过脱敏的用户名
+    nickname     TEXT    DEFAULT ''   NOT NULL, -- nick_name_new > nickname_old
 
-    avatar      TEXT    DEFAULT NULL NULL,
-    glevel      INTEGER DEFAULT 0  NOT NULL, -- 成长等级
-    gender      INTEGER DEFAULT 0  NOT NULL, -- 0 unknown, 1 male, 2 female
-    ip          TEXT    DEFAULT '' NOT NULL,
-    is_vip      BOOLEAN DEFAULT 0  NOT NULL, -- 是贵族
-    is_god      BOOLEAN DEFAULT 0  NOT NULL, -- 是大神
-    age         FLOAT              NOT NULL, -- get_userinfo()
-    sign        TEXT    DEFAULT '' NOT NULL, -- get_userinfo() 小尾巴
-    post_num    INTEGER DEFAULT 0  NOT NULL, -- get_userinfo()
-    agree_num   INTEGER DEFAULT 0  NOT NULL, -- get_userinfo()
-    fan_num     INTEGER DEFAULT 0  NOT NULL, -- get_userinfo() 粉丝数
-    follow_num  INTEGER DEFAULT 0  NOT NULL, -- get_userinfo() 关注数量
-    forum_num   INTEGER DEFAULT 0  NOT NULL, -- get_userinfo() 贴吧数量
+    glevel       INTEGER DEFAULT 0    NOT NULL, -- 成长等级
+    gender       INTEGER DEFAULT 0    NOT NULL, -- 0 unknown, 1 male, 2 female
+    ip           TEXT    DEFAULT ''   NOT NULL,
+    is_vip       BOOLEAN DEFAULT 0    NOT NULL, -- 是贵族
+    is_god       BOOLEAN DEFAULT 0    NOT NULL, -- 是大神
+    age          FLOAT   DEFAULT 0    NOT NULL, -- 吧龄(get_userinfo)
+    sign         TEXT    DEFAULT ''   NOT NULL, -- 小尾巴(get_userinfo)
+    post_num     INTEGER DEFAULT 0    NOT NULL, -- (get_userinfo)
+    agree_num    INTEGER DEFAULT 0    NOT NULL, -- 被赞同数(get_userinfo)
+    fan_num      INTEGER DEFAULT 0    NOT NULL, -- 粉丝数(get_userinfo)
+    follow_num   INTEGER DEFAULT 0    NOT NULL, -- 关注数(get_userinfo)
+    forum_num    INTEGER DEFAULT 0    NOT NULL, -- 关注贴吧数(get_userinfo)
+
     -- 吧相关
-    level       INTEGER DEFAULT 0  NOT NULL, -- 在这个吧的等级
-    is_bawu     BOOLEAN DEFAULT 0  NOT NULL, -- 是吧务 link
+    level        INTEGER DEFAULT 0    NOT NULL, -- 在当前吧的等级
+    is_bawu      BOOLEAN DEFAULT 0    NOT NULL, -- 是吧务
 
-    status      INTEGER DEFAULT 0  NOT NULL, -- 0 正常，1 注销
+    -- archive
+    avatar       TEXT    DEFAULT ''   NOT NULL, -- 头像文件名
+    batch        INTEGER              NOT NULL, -- 由于 age 不会自动更新， 保存时间。
+    completeness INTEGER DEFAULT 10   NOT NULL,
+    done         BOOLEAN DEFAULT 0    NOT NULL  --完成状态
 
-    completed   BOOLEAN DEFAULT 0  NOT NULL, -- (v1.3.0) 是否 completed, 在更新功能里用于避免重复更新。
-    scrape_time INTEGER DEFAULT 0  NOT NULL  -- (v1.3.0) 抓取时间。如果是 0 则就读取 scrape_log.json 的 create_time
+--     reply_id  : id : 10
+--     at   : id , nickname : 20
+--     p_u reg / sp_u reg : id, nickname ... : 30
+--     get_user_info()  : 最全的信息 : 40  因为的全度是不一 的所以要如果有限度高就覆盖过去。
 );
-CREATE UNIQUE INDEX 'uk_user(portrait)' ON 'user'(portrait);
-CREATE UNIQUE INDEX 'uk_user(tieba_uid)' ON 'user'(tieba_uid);
-CREATE INDEX 'idx_user(completed)' ON 'user'(completed);    -- (v1.3.0) 新增
+CREATE UNIQUE INDEX 'uk_user(id)' ON 'user' (id);
+CREATE UNIQUE INDEX 'uk_user(portrait)' ON 'user' (portrait);
+CREATE UNIQUE INDEX 'uk_user(tieba_uid)' ON 'user' (tieba_uid);
+CREATE INDEX 'idx_user(batch)' ON 'user' (batch);
+CREATE INDEX 'idx_user(done)' ON 'user' (done);
 
 
--- (v1.3.0) 新增
-DROP TABLE IF EXISTS user_info_history;
-CREATE TABLE user_info_history
+DROP TABLE IF EXISTS thread;
+CREATE TABLE thread
 (
-    -- key
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    portrait    TEXT    DEFAULT NULL NULL,
-    username    TEXT    DEFAULT NULL NULL,
-    tieba_uid   INTEGER DEFAULT NULL NULL,
+    id           INTEGER PRIMARY KEY,
+    title        TEXT               NOT NULL,
+    contents     TEXT               NOT NULL, -- floor1
+    type         INTEGER DEFAULT 0  NOT NULL,
+    is_share     BOOLEAN DEFAULT 0  NOT NULL,
+    is_help      BOOLEAN DEFAULT 0  NOT NULL,
+    vote_info    TEXT    DEFAULT '' NOT NULL, -- json, options.length 判断是否有投票
+    share_origin INTEGER DEFAULT 0  NOT NULL,
+    view_num     INTEGER DEFAULT 0  NOT NULL,
+    reply_num    INTEGER DEFAULT 0  NOT NULL,
+    share_num    INTEGER DEFAULT 0  NOT NULL,
+    agree        INTEGER DEFAULT 0  NOT NULL,
+    disagree     INTEGER DEFAULT 0  NOT NULL,
+    create_time  INTEGER            NOT NULL,
 
-    -- history
-    field_name  TEXT              NOT NULL,
-    field_value TEXT              NOT NULL,
+    forum_id     INTEGER            NOT NULL,
+    post_id      INTEGER            NOT NULL, -- 首楼回复pid
+    author_id    INTEGER            NOT NULL,
 
-    scrape_time INTEGER DEFAULT 0 NOT NULL
+    status       INTEGER DEFAULT 0  NOT NULL  -- 0 正常, 1 已被屏蔽或删除
 );
-CREATE INDEX 'idx_user(tieba_uid)' ON user_info_history (tieba_uid);
-CREATE INDEX 'idx_user_info_history(portrait)' ON user_info_history (portrait);
-CREATE INDEX 'idx_user_info_history(field_name)' ON user_info_history (field_name);
 
 
-DROP TABLE IF EXISTS content_fragment_type;
-CREATE TABLE content_fragment_type
+DROP TABLE IF EXISTS forum;
+CREATE TABLE forum
 (
-    id   INTEGER PRIMARY KEY AUTOINCREMENT,
-    type TEXT NOT NULL
+    id          INTEGER PRIMARY KEY,
+    name        TEXT               NOT NULL,
+    category    TEXT    DEFAULT '' NOT NULL,
+    subcategory TEXT    DEFAULT '' NOT NULL,
+    member_num  INTEGER DEFAULT 0  NOT NULL,
+    post_num    INTEGER DEFAULT 0  NOT NULL,
+    thread_num  INTEGER DEFAULT 0  NOT NULL,
+    slogan      TEXT    DEFAULT '' NOT NULL,
+    avatar      TEXT    DEFAULT '' NOT NULL
 );
 
 
 DROP TABLE IF EXISTS tieba_origin_src;
 CREATE TABLE tieba_origin_src
 (
-    id                INTEGER PRIMARY KEY AUTOINCREMENT,
-    filename          TEXT    NOT NULL,
-    content_frag_type INTEGER NOT NULL,
-    origin_src        TEXT    NOT NULL
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    filename   TEXT NOT NULL,
+    origin_src TEXT NOT NULL
 );
 CREATE UNIQUE INDEX 'uk_tieba_origin_src(filename)' ON tieba_origin_src (filename);
-CREATE INDEX 'idx_tieba_origin_src(content_frag_type)' ON tieba_origin_src (content_frag_type);
+
+

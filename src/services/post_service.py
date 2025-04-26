@@ -3,6 +3,7 @@ import math
 
 from aiotieba.typing import Posts, Comments, Post
 
+from model.producer_consumer_contact import ProducerConsumerContact
 from ..api.aiotieba_client import get_posts, get_comments
 from ..config.scraper_config import SCRAPER_VERSION
 from ..container.container import Container
@@ -11,7 +12,6 @@ from ..db.scrape_batch_dao import ScrapeBatchDao
 from ..db.tieba_origin_src_dao import TiebaOriginSrcDao
 from ..db.user_dao import UserDao
 from ..pojo.post_entity import PostEntity
-from ..pojo.producer_consumer_contact import ProducerConsumerContact
 from ..scrape_config import PostFilterType, ScrapeConfig
 from ..services.content_service import ContentService, ContentsAffiliation
 from ..services.user_service import UserService

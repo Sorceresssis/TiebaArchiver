@@ -1,246 +1,28 @@
 import os
 import sqlite3
-from typing import Callable, Tuple, List
+from typing import Callable
+
+from __version__ import __version__, release_history
+from model.content_frag import ContentFragType
 
 
-# from config.scraper_config import SCRAPER_VERSION
-# from pojo.content_frag import ContentFragType
-#
-#
-# class DBInfoKey(Enum):
-#     SCRAPER_VERSION = "scraper_version"
-#     THREAD_ID = "thread_id"
+class DBInfoKey:
+    version = 'version'
 
 
 class ContentDB(sqlite3.Connection):
 
-    def __init__(self, tid: int, file_path: str):
-        self.tid = tid
-        is_exists = os.path.exists(file_path)
+    def __init__(self, file_path: str):
+        file_exists = os.path.exists(file_path)
 
         super().__init__(file_path)
         self.isolation_level = None  # 开启自动提交
-        self.execute("pragma journal_mode=wal;")
+        self.execute('pragma journal_mode=wal;')
 
-        # TODO
-        # if is_exists:
-        #     self.transaction(self.__update_db_structure)
-        # else:
-        #     self.transaction(self.__create_db_structure)
-
-    def __create_db_structure(self) -> None:
-        # DDL
-        ddl = """
-            DROP TABLE IF EXISTS db_info;
-            CREATE TABLE db_info
-            (
-                k TEXT PRIMARY KEY,
-                v TEXT NOT NULL
-            );
-
-            DROP TABLE IF EXISTS scrape_batch;
-            CREATE TABLE scrape_batch
-            (
-                id              INTEGER PRIMARY KEY AUTOINCREMENT,
-                scraper_version TEXT    NOT NULL,
-                scrape_config   TEXT    NOT NULL,
-                scrape_time     INTEGER NOT NULL
-            );
-
-            DROP TABLE IF EXISTS post;
-            CREATE TABLE post
-            (
-                id               INTEGER PRIMARY KEY AUTOINCREMENT,
-                contents         TEXT               NOT NULL,
-                floor            INTEGER            NOT NULL,
-                user_id          INTEGER            NOT NULL,
-                agree            INTEGER DEFAULT 0  NOT NULL,
-                disagree         INTEGER DEFAULT 0  NOT NULL,
-                create_time      INTEGER            NOT NULL,
-                is_thread_author BOOLEAN DEFAULT 0  NOT NULL,
-                sign             TEXT    DEFAULT '' NOT NULL,
-                reply_num        INTEGER DEFAULT 0  NOT NULL,
-                parent_id        INTEGER DEFAULT 0  NOT NULL,
-                reply_to_id      INTEGER DEFAULT 0  NOT NULL,
-                scrape_batch_id  INTEGER DEFAULT 0  NOT NULL
-            );
-            CREATE INDEX 'idx_post(floor)' ON post (floor);
-            CREATE INDEX 'idx_post(user_id)' ON post (user_id);
-            CREATE INDEX 'idx_post(agree)' ON post (agree);
-            CREATE INDEX 'idx_post(create_time)' ON post (create_time);
-            CREATE INDEX 'idx_post(is_thread_author)' ON post (is_thread_author);
-            CREATE INDEX 'idx_post(parent_id)' ON post (parent_id);
-            CREATE INDEX 'idx_post(scrape_batch_id)' ON post(scrape_batch_id);
-
-            DROP TABLE IF EXISTS 'user';
-            CREATE TABLE user
-            (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                portrait    TEXT    DEFAULT NULL NULL,
-                username    TEXT    DEFAULT NULL NULL,
-                nickname    TEXT               NOT NULL,
-                tieba_uid   INTEGER DEFAULT NULL NULL,
-                avatar      TEXT    DEFAULT NULL NULL,
-                glevel      INTEGER DEFAULT 0  NOT NULL,
-                gender      INTEGER DEFAULT 0  NOT NULL,
-                ip          TEXT    DEFAULT '' NOT NULL,
-                is_vip      BOOLEAN DEFAULT 0  NOT NULL,
-                is_god      BOOLEAN DEFAULT 0  NOT NULL,
-                age         FLOAT              NOT NULL,
-                sign        TEXT    DEFAULT '' NOT NULL,
-                post_num    INTEGER DEFAULT 0  NOT NULL,
-                agree_num   INTEGER DEFAULT 0  NOT NULL,
-                fan_num     INTEGER DEFAULT 0  NOT NULL,
-                follow_num  INTEGER DEFAULT 0  NOT NULL,
-                forum_num   INTEGER DEFAULT 0  NOT NULL,
-                level       INTEGER DEFAULT 0  NOT NULL,
-                is_bawu     BOOLEAN DEFAULT 0  NOT NULL,
-                status      INTEGER DEFAULT 0  NOT NULL,
-                completed   BOOLEAN DEFAULT 0  NOT NULL,
-                scrape_time INTEGER DEFAULT 0  NOT NULL
-            );
-            CREATE UNIQUE INDEX 'uk_user(portrait)' ON 'user'(portrait);
-            CREATE UNIQUE INDEX 'uk_user(tieba_uid)' ON 'user'(tieba_uid);
-            CREATE INDEX 'idx_user(completed)' ON 'user'(completed);
-
-            DROP TABLE IF EXISTS user_info_history;
-            CREATE TABLE user_info_history
-            (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                portrait    TEXT    DEFAULT NULL NULL,
-                username    TEXT    DEFAULT NULL NULL,
-                tieba_uid   INTEGER DEFAULT NULL NULL,
-                field_name  TEXT              NOT NULL,
-                field_value TEXT              NOT NULL,
-                scrape_time INTEGER DEFAULT 0 NOT NULL
-            );
-            CREATE INDEX 'idx_user(tieba_uid)' ON user_info_history (tieba_uid);
-            CREATE INDEX 'idx_user_info_history(portrait)' ON user_info_history (portrait);
-            CREATE INDEX 'idx_user_info_history(field_name)' ON user_info_history (field_name);
-
-            DROP TABLE IF EXISTS content_fragment_type;
-            CREATE TABLE content_fragment_type
-            (
-                id   INTEGER PRIMARY KEY AUTOINCREMENT,
-                type TEXT NOT NULL
-            );
-
-            DROP TABLE IF EXISTS tieba_origin_src;
-            CREATE TABLE tieba_origin_src
-            (
-                id                INTEGER PRIMARY KEY AUTOINCREMENT,
-                filename          TEXT    NOT NULL,
-                content_frag_type INTEGER NOT NULL,
-                origin_src        TEXT    NOT NULL
-            );
-            CREATE UNIQUE INDEX 'uk_tieba_origin_src(filename)' ON tieba_origin_src (filename);
-            CREATE INDEX 'idx_tieba_origin_src(content_frag_type)' ON tieba_origin_src (content_frag_type);
-        """
-        self.executescript(ddl)
-
-        self.__insert_db_info_data()
-
-        # content_fragment_type
-        content_fragment_type_insert_sql = "INSERT INTO content_fragment_type(id, type) VALUES (?, ?); "
-        content_fragment_type_insert_params = [
-            (ContentFragType.TEXT, "text"),
-            (ContentFragType.EMOJI, "emoji"),
-            (ContentFragType.IMAGE, "image"),
-            (ContentFragType.AT, "at"),
-            (ContentFragType.LINK, "link"),
-            (ContentFragType.TIEBAPLUS, "tiebaplus"),
-            (ContentFragType.VIDEO, "video"),
-            (ContentFragType.VOICE, "voice"),
-            (ContentFragType.SCRAPE_ERROR, "scrape_error"),
-        ]
-        self.executemany(content_fragment_type_insert_sql, content_fragment_type_insert_params)
-
-    def __update_db_structure(self):
-        # 模拟 switch 语句
-        # 读取 db_info
-        scraper_version: str | None = None
-
-        sql_db_info_select_sql = "SELECT * FROM sqlite_master WHERE type='table' AND name='db_info';"
-        sql_scraper_version_select = f"SELECT v FROM db_info WHERE k = '{DBInfoKey.SCRAPER_VERSION.value}';"
-        sql_scraper_version_update = (
-            f"UPDATE db_info SET v = '{SCRAPER_VERSION}' WHERE k = '{DBInfoKey.SCRAPER_VERSION.value}';"
-        )
-        if self.execute(sql_db_info_select_sql).fetchone():
-            row = self.execute(sql_scraper_version_select).fetchone()
-            if row is not None:
-                scraper_version = row[0]
-
-        scraper_version_list = [
-            None,
-            "1.3.0",
-            "1.3.1",
-        ]
-        scraper_version_anchor = scraper_version_list.index(scraper_version)
-
-        #  v1.2.1 -> v1.3.0
-        if 1 > scraper_version_anchor:
-            sql_alter__v_1_3_0 = """
-                    DROP TABLE IF EXISTS db_info;
-                    CREATE TABLE db_info
-                    (
-                        k TEXT PRIMARY KEY,
-                        v TEXT NOT NULL
-                    );
-
-                    ALTER TABLE user ADD COLUMN completed BOOLEAN DEFAULT 0 NOT NULL;
-                    CREATE INDEX 'idx_user(completed)' ON 'user'(completed);
-                    UPDATE user SET completed = 1;
-                    ALTER TABLE user ADD COLUMN scrape_time INTEGER DEFAULT 0 NOT NULL;
-
-                    DROP TABLE IF EXISTS user_info_history;
-                    CREATE TABLE user_info_history
-                    (
-                        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                        portrait    TEXT    DEFAULT NULL NULL,
-                        username    TEXT    DEFAULT NULL NULL,
-                        tieba_uid   INTEGER DEFAULT NULL NULL,
-                        field_name  TEXT              NOT NULL,
-                        field_value TEXT              NOT NULL,
-                        scrape_time INTEGER DEFAULT 0 NOT NULL
-                    );
-                    CREATE INDEX 'idx_user(tieba_uid)' ON user_info_history (tieba_uid);
-                    CREATE INDEX 'idx_user_info_history(portrait)' ON user_info_history (portrait);
-                    CREATE INDEX 'idx_user_info_history(field_name)' ON user_info_history (field_name);
-                """
-            self.executescript(sql_alter__v_1_3_0)
-            self.__insert_db_info_data()
-
-        #  v1.3.0 -> v1.3.1
-        if 2 > scraper_version_anchor:
-            sql_alter__v_1_3_1 = """
-                    DROP TABLE IF EXISTS scrape_batch;
-                    CREATE TABLE scrape_batch
-                    (
-                        id              INTEGER PRIMARY KEY AUTOINCREMENT,
-                        scraper_version TEXT    NOT NULL,
-                        scrape_config   TEXT    NOT NULL,
-                        scrape_time     INTEGER NOT NULL
-                    );
-
-                    ALTER TABLE post ADD COLUMN scrape_batch_id INTEGER DEFAULT 0 NOT NULL;
-                    CREATE INDEX 'idx_post(scrape_batch_id)' ON post(scrape_batch_id);
-                """
-            self.executescript(sql_alter__v_1_3_1)
-
-        #  v1.3.1 -> new version
-        # if 3 > scraper_version_anchor:
-        #     pass
-
-        # 更新 scraper_version
-        self.execute(sql_scraper_version_update)
-
-    def __insert_db_info_data(self):
-        db_info_insert_sql = "INSERT INTO db_info VALUES (?, ?);"
-        db_info_insert_params: List[Tuple[str, str]] = [
-            (DBInfoKey.SCRAPER_VERSION.value, SCRAPER_VERSION),
-            (DBInfoKey.THREAD_ID.value, str(self.thread_id)),
-        ]
-        self.executemany(db_info_insert_sql, db_info_insert_params)
+        if file_exists:
+            self.transaction(self._update_data_structure)
+        else:
+            self.transaction(self._create_data_structure)
 
     def transaction(self, func: Callable[[], None]) -> None:
         """
@@ -258,3 +40,183 @@ class ContentDB(sqlite3.Connection):
             print(f"An error occurred: {e}")
             self.rollback()
             raise e
+
+    def _create_data_structure(self) -> None:
+        # DDL
+        ddl = '''
+DROP TABLE IF EXISTS db_info;
+CREATE TABLE db_info
+(
+    k TEXT PRIMARY KEY,
+    v TEXT NOT NULL
+);
+
+DROP TABLE IF EXISTS batch;
+CREATE TABLE batch
+(
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    version TEXT    NOT NULL,
+    time    INTEGER NOT NULL,
+    config  TEXT    NOT NULL
+);
+
+DROP TABLE IF EXISTS content_fragment_type;
+CREATE TABLE content_fragment_type
+(
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    label TEXT NOT NULL
+);
+
+DROP TABLE IF EXISTS post;
+CREATE TABLE post
+(
+    id               INTEGER PRIMARY KEY,
+    contents         TEXT               NOT NULL, 
+    floor            INTEGER            NOT NULL, 
+
+    agree            INTEGER DEFAULT 0  NOT NULL,
+    disagree         INTEGER DEFAULT 0  NOT NULL,
+    create_time      INTEGER            NOT NULL,
+    is_thread_author BOOLEAN DEFAULT 0  NOT NULL, 
+
+    sign             TEXT    DEFAULT '' NOT NULL, 
+    reply_num        INTEGER DEFAULT 0  NOT NULL, 
+
+    parent_id        INTEGER DEFAULT 0  NOT NULL, 
+    reply_to_id      INTEGER DEFAULT 0  NOT NULL, 
+    thread_id        INTEGER            NOT NULL,
+    author_id        INTEGER            NOT NULL,
+
+    batch            INTEGER            NOT NULL,
+    update_batch     INTEGER            NOT NULL
+);
+CREATE INDEX 'idx_post(floor)' ON post (floor);
+CREATE INDEX 'idx_post(author_id)' ON post (author_id);
+CREATE INDEX 'idx_post(agree)' ON post (agree);
+CREATE INDEX 'idx_post(create_time)' ON post (create_time);
+CREATE INDEX 'idx_post(is_thread_author)' ON post (is_thread_author);
+CREATE INDEX 'idx_post(parent_id)' ON post (parent_id);
+CREATE INDEX 'idx_post(batch)' ON post (batch);
+CREATE INDEX 'idx_post(update_batch)' ON post (update_batch);
+
+DROP TABLE IF EXISTS thread;
+CREATE TABLE thread
+(
+    id           INTEGER PRIMARY KEY,
+    title        TEXT               NOT NULL,
+    contents     TEXT               NOT NULL, 
+    type         INTEGER DEFAULT 0  NOT NULL,
+    is_share     BOOLEAN DEFAULT 0  NOT NULL,
+    is_help      BOOLEAN DEFAULT 0  NOT NULL,
+    vote_info    TEXT    DEFAULT '' NOT NULL, 
+    share_origin INTEGER DEFAULT 0  NOT NULL,
+    view_num     INTEGER DEFAULT 0  NOT NULL,
+    reply_num    INTEGER DEFAULT 0  NOT NULL,
+    share_num    INTEGER DEFAULT 0  NOT NULL,
+    agree        INTEGER DEFAULT 0  NOT NULL,
+    disagree     INTEGER DEFAULT 0  NOT NULL,
+    create_time  INTEGER            NOT NULL,
+
+    forum_id     INTEGER            NOT NULL,
+    post_id      INTEGER            NOT NULL, 
+    author_id    INTEGER            NOT NULL,
+
+    status       INTEGER DEFAULT 0  NOT NULL  
+);
+
+DROP TABLE IF EXISTS forum;
+CREATE TABLE forum
+(
+    id          INTEGER PRIMARY KEY,
+    name        TEXT               NOT NULL,
+    category    TEXT    DEFAULT '' NOT NULL,
+    subcategory TEXT    DEFAULT '' NOT NULL,
+    member_num  INTEGER DEFAULT 0  NOT NULL,
+    post_num    INTEGER DEFAULT 0  NOT NULL,
+    thread_num  INTEGER DEFAULT 0  NOT NULL,
+    slogan      TEXT    DEFAULT '' NOT NULL,
+    avatar      TEXT    DEFAULT '' NOT NULL
+);
+
+DROP TABLE IF EXISTS 'user';
+CREATE TABLE user
+(
+    id         INTEGER DEFAULT NULL NULL,     
+    portrait   TEXT    DEFAULT NULL NULL,     
+    tieba_uid  INTEGER DEFAULT NULL NULL,     
+    username   TEXT    DEFAULT ''   NOT NULL, 
+    nickname   TEXT    DEFAULT ''   NOT NULL, 
+
+    glevel     INTEGER DEFAULT 0    NOT NULL, 
+    gender     INTEGER DEFAULT 0    NOT NULL, 
+    ip         TEXT    DEFAULT ''   NOT NULL,
+    is_vip     BOOLEAN DEFAULT 0    NOT NULL, 
+    is_god     BOOLEAN DEFAULT 0    NOT NULL, 
+    age        FLOAT   DEFAULT 0    NOT NULL, 
+    sign       TEXT    DEFAULT ''   NOT NULL, 
+    post_num   INTEGER DEFAULT 0    NOT NULL, 
+    agree_num  INTEGER DEFAULT 0    NOT NULL, 
+    fan_num    INTEGER DEFAULT 0    NOT NULL, 
+    follow_num INTEGER DEFAULT 0    NOT NULL, 
+    forum_num  INTEGER DEFAULT 0    NOT NULL, 
+
+    level      INTEGER DEFAULT 0    NOT NULL, 
+    is_bawu    BOOLEAN DEFAULT 0    NOT NULL, 
+
+    avatar     TEXT    DEFAULT ''   NOT NULL, 
+    status     INTEGER DEFAULT 0    NOT NULL, 
+    batch      INTEGER              NOT NULL  
+);
+CREATE UNIQUE INDEX 'uk_user(id)' ON 'user' (id);
+CREATE UNIQUE INDEX 'uk_user(portrait)' ON 'user' (portrait);
+CREATE UNIQUE INDEX 'uk_user(tieba_uid)' ON 'user' (tieba_uid);
+
+DROP TABLE IF EXISTS tieba_origin_src;
+CREATE TABLE tieba_origin_src
+(
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    filename   TEXT NOT NULL,
+    origin_src TEXT NOT NULL
+);
+CREATE UNIQUE INDEX 'uk_tieba_origin_src(filename)' ON tieba_origin_src (filename);
+'''
+
+        self.executescript(ddl)
+
+        self.executemany('INSERT INTO db_info(k, v) VALUES (?, ?);', [
+            (DBInfoKey.version, __version__),
+        ])
+
+        self.executemany(
+            'INSERT INTO content_fragment_type(id, label) VALUES (?, ?);',
+            list(map(lambda x: (x.value, x.label), ContentFragType))
+        )
+
+    def _update_data_structure(self):
+        current_version = self._get_db_info_item(DBInfoKey.version)
+
+        if current_version == __version__:
+            return
+
+        # TODO LOG 开始更新数据库。
+
+        anchor = release_history.index(current_version)
+        # 模拟 switch...case... 连续升级
+        if release_history.index('2.0.0') > anchor:
+            self.executescript('''''')
+
+        self._update_db_info_item(DBInfoKey.version, __version__)
+
+    def _update_db_info_item(self, k: str, v: str):
+        sql_key_exists = 'SELECT 1 FROM db_info WHERE k = ?'
+        sql_update = 'UPDATE db_info SET v = ? WHERE k = ?'
+        sql_insert = 'INSERT INTO db_info(k, v) VALUES (?, ?)'
+
+        if self.execute(sql_key_exists, (k,)).fetchone():
+            self.execute(sql_update, (v, k))
+        else:
+            self.execute(sql_insert, (k, v))
+
+    def _get_db_info_item(self, k: str) -> str:
+        sql = 'SELECT v FROM db_info WHERE k = ?'
+        return self.execute(sql, (k,)).fetchone()[0]

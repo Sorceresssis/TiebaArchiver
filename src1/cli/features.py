@@ -9,6 +9,8 @@ class ProgramFeatures(IntEnum):
     MODIFY_CONFIG = auto()
     MODIFY_TIEBA_AUTH = auto()
     EXIT = auto()
+
+    TRIM_ARCHIVE = auto()
     ARCHIVE_USER_THREADS = auto()
     UPDATE_ARCHIVED_USER_THREADS = auto()
 

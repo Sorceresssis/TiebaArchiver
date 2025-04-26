@@ -1,21 +1,19 @@
 [project]
 name = "tieba-archiver"
-version = "1.3.2"
+version = "2.0.0"
 description = ""
-authors = [
-    { name = "Sorceress" }
-]
+authors = [{ name = "Sorceress" }]
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
 dependencies = [
     "aiotieba (>=4.5.3,<5.0.0)",
-    "orjson (>=3.10.15,<4.0.0)",
+    "orjson (==3.10.16)",
     "aiofiles (>=24.1.0,<25.0.0)",
     "questionary (>=2.1.0,<3.0.0)",
     "colorama (==0.4.6)",
-    "tqdm (>=4.67.1,<5.0.0)"
+    "tqdm (>=4.67.1,<5.0.0)",
+    "prompt-toolkit (>=3.0.51,<4.0.0)",
 ]
-
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

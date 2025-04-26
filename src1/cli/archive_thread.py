@@ -12,15 +12,14 @@ async def archive_thread():
 
     await CliTiebaAuthTool.load()
     config = await CliArchiveConfigTool.load()
+    print(config.insight())
+    if not await CliPrompt.confirm("使用该配置还是修改").ask_async():
+        config = await CliArchiveConfigTool.editor(config)
 
     ids_str = input("请输入帖子ID (多个请用空格/换行分隔)：")
     if not re.match(r'^[\d\s\n]+$', ids_str):
         print("请输入正确的tid")
         return
-
-    print(config.insight())
-    if not await CliPrompt.confirm("使用该配置还是修改").ask_async():
-        config = await CliArchiveConfigTool.editor(config)
 
     failures = []
     for id_str in ids_str.split():

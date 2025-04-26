@@ -2,8 +2,9 @@ from asyncio import Lock
 
 from container.container import Container
 from pojo.user_entity import UserEntity
-from utils.logger import generate_scrape_logger_msg
 from utils.msg_printer import MsgPrinter
+
+from utils.logger import generate_scrape_logger_msg
 
 lock = Lock()
 
@@ -52,6 +53,7 @@ class UserDao:
         return UserEntity(*tuple_row)
 
     async def insert(self, entity: UserEntity):
+        # TODO 这个 lock 多余了，没有 await 异步调度点
         async with lock:
             sql = """
             INSERT INTO user(id, portrait, username, nickname, tieba_uid, 

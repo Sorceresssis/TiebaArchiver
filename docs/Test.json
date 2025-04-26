@@ -1,0 +1,28 @@
+{
+  "thread": [
+    {
+      "id": 8695394788,
+      "desc": "贴吧搞的AI角色, aiotieba.get_posts会查出pid=0的数据。。https://github.com/Starry-OvO/aiotieba/issues/210"
+    },
+    {
+      "id": 2428664072,
+      "desc": "自定义填字表情包 神来一句。https://github.com/Starry-OvO/aiotieba/issues/207"
+    },
+    {
+      "id": 2267343048,
+      "desc": "会请求到重复的post"
+    },
+    {
+      "id": 610537635,
+      "desc": "v1.32 卡住"
+    },
+    {
+      "id": 4025914848,
+      "desc": "第二楼的 id为 75497714390 的 subpost 会乱码"
+    },
+    {
+      "id": 25084945,
+      "desc": "上古老帖，测试没有user_id 的 ip 用户"
+    }
+  ]
+}

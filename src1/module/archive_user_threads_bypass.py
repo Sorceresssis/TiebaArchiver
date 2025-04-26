@@ -8,3 +8,29 @@ https://github.com/lumina37/aiotieba/issues/261#issuecomment-2681084538
 
 
 """
+
+# 用 get_user_posts 。
+# 查出所有的pos，然后根据 tid 查出对应的帖子。
+#  是否存在。  是否时 author_thread
+
+# * 可以正常打开的 thread。
+# 不能正常打开的就，保存 post.
+
+
+# get_user_posts 返回的只能是 FragText ，所以很多信息无法解析
+# 图片会变成
+# LIST: Contents_up(objs=[FragText(text='[图片]')])
+# LIST: Contents_up(objs=[FragText(text='[图片]')])
+# LIST: Contents_up(objs=[FragText(text='[图片]')])
+# LIST: Contents_up(objs=[FragText(text='[图片]')])
+# LIST: Contents_up(objs=[FragText(text='[图片]')])
+# LIST: Contents_up(objs=[FragText(text='[图片]')])
+# LIST: Contents_up(objs=[FragText(text='[图片]')])
+# LIST: Contents_up(objs=[FragText(text='[图片]')])
+
+# 当 出现 UserPostss(objs=[])  时不代表，就没了。
+
+
+# ANCHOR
+# 会出现 UserPost(contents=Contents_up(objs=[]), 但是实际上是有内容的情况。就是一切要以 thread 显示为准。
+# tid 3517367868  floor: 58

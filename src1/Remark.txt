@@ -1,0 +1,20 @@
+1. pyinstaller + pydub + ffmpeg 看能不能实现。
+
+1. 买一杯咖啡
+
+1. aiotieba.Client 复用，添加代理
+
+3. [tieba Reader]吧龄 这么更新。
+tiebaRead ,显示 爬取时间。
+1. TiebaReader 用 reply_num 来判断是否获取 subpost, 如果不更新 reply_num, TiebaReader会导致新增的subpost无法显示。
+
+6. 导出可读的文件.
+模仿 telegram message 导出
+
+但是 tieba有 楼中楼，所以需要提供直接滚动到下一楼的方法。
+
+
+1. 导出蒸馏
+读取爬取配置，展示出来，然后再让用户选择导出模式。
+导出 也可以 配置 只看楼主。
+导出完成，提供左右选项，在资源管理器中显示，默认跳过。

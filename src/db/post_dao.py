@@ -19,6 +19,7 @@ class PostDao:
         return result is not None
 
     def is_author_replied_post(self, pid: int, scrape_batch_id: int):
+        # FIXME scrape_batch_id = ? 这个条件要删除， 这个要全局判断，
         sql = "SELECT 1 FROM post WHERE parent_id = ? AND scrape_batch_id = ? AND is_thread_author = 1;"
         cursor = self.db.execute(sql, (pid, scrape_batch_id,))
         result = cursor.fetchone()

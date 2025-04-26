@@ -2,26 +2,6 @@
 
 ## Post
 
-### 表结构
-
-| 字段名                | 类型      | 约束                        | 类型           | 说明                             |
-|--------------------|---------|---------------------------|--------------|--------------------------------|
-| `id`               | INTEGER | PRIMARY KEY AUTOINCREMENT |              | 主键，自增 ID                       |
-| `contents`         | TEXT    | NOT NULL                  |              | 内容，格式为 JSON，例如：`[{ type: 1 }]` |
-| `floor`            | INTEGER | NOT NULL                  |              | 楼层编号，`post` 与其 `subpost` 共用楼层号 |
-| `user_id`          | INTEGER | NOT NULL                  |              | 发帖用户 ID                        |
-| `agree`            | INTEGER | DEFAULT 0 NOT NULL        |              | 点赞数                            |
-| `disagree`         | INTEGER | DEFAULT 0 NOT NULL        |              | 点踩数                            |
-| `create_time`      | INTEGER | NOT NULL                  |              | 发帖时间（时间戳）                      |
-| `is_thread_author` | BOOLEAN | DEFAULT 0 NOT NULL        |              | 是否为楼主发布的内容                     |
-| `sign`             | TEXT    | DEFAULT '' NOT NULL       | post 独有      | 帖子签名，小尾巴                       |
-| `reply_num`        | INTEGER | DEFAULT 0 NOT NULL        | post 独有      | 回复数                            |
-| `parent_id`        | INTEGER | DEFAULT 0 NOT NULL        | subpost 独有   | 父 `post` 的 ID，若为 0 表示为主帖       |
-| `reply_to_id`      | INTEGER | DEFAULT 0 NOT NULL        | subpost 独有   | 回复目标用户的 ID，非树状结构               |
-| `batch_id`         | INTEGER | DEFAULT 0 NOT NULL        | archive_flag | 爬取批次编号，用于标识该数据属于哪个抓取任务         |
-
-### 详细说明
-
 #### sign
 
 小尾巴。
@@ -39,6 +19,7 @@
 
 #### reply_to_id(被回复者)
 
+回复目标用户的 ID，非树状结构
 贴吧表达被回复者有三种方式
 
 **1. 把被回复者的昵称写入 contents 的 FragText**
@@ -76,9 +57,19 @@ Contents(
 
 目前官方使用的方法。用 reply_to_id 属性表明回复者。
 
+**其他**
+
 下面是既有 reply_to_id 也把被回复者当时的昵称给嵌入到了帖子内容时的抽象显示。
 
-![1721378398134](./assets/tieba_data_notes/images/1721378398134.png)
+![1721378398134](./assets/TiebaDataNote/images/1721378398134.png)
+
+**官方网页显示**
+
+![1720660235522](./assets/TiebaDataNote/images/1720660235522.png)
+
+**TiebaReader 显示**
+
+![1720660393315](./assets/TiebaDataNote/images/1720660393315.png)
 
 ## User
 
@@ -343,8 +334,8 @@ glevel 贴吧成长等级
 
 ### 分块编号
 
-```python
-_type = proto.type
+```python 
+    _type = proto.type
 # 0纯文本 9电话号 18话题 27百科词条 40梗百科
 if _type in [0, 9, 18, 27, 40]:
     frag = FragText_p.from_tbdata(proto)
@@ -482,7 +473,7 @@ FragAT(
 
 网页端会显示设备，但是移动端 api 没有设备信息。
 
-![1717232574390](./assets/tieba_data_notes/images/1717232574390.png)
+![1717232574390](./assets/TiebaDataNote/images/1717232574390.png)
 
 ### 自定义填字表情包
 
