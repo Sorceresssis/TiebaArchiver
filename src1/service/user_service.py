@@ -1,7 +1,8 @@
 from logging import Logger
 
+from types.archive_config import ArchiveConfig
+
 from api.aiotieba_api import AioTiebaPostUser, AioTiebaSubpostUser
-from config.archive_config import ArchiveConfig
 from db.content_db import ContentDB
 
 

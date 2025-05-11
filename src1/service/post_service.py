@@ -1,8 +1,9 @@
 import asyncio
 from logging import Logger
 
+from types.archive_config import ArchiveConfig, PostFilter
+
 from api.aiotieba_api import AioTiebaPosts, get_posts, get_subposts
-from config.archive_config import ArchiveConfig, PostFilter
 from db.content_db import ContentDB
 from db.post_dao import PostDao
 from service.user_service import UserService

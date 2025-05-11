@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from archive_config import PostFilter
+from types.archive_config import PostFilter
 
 
 @dataclass

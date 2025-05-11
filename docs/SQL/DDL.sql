@@ -39,7 +39,7 @@ CREATE TABLE post
     sign             TEXT    DEFAULT ''   NOT NULL, -- post独有. 小尾巴，原本是支持图片的，在web端可以正常显示.
     reply_num        INTEGER DEFAULT 0    NOT NULL, -- post独有. 被回复的次数.
 
-    parent_id        INTEGER DEFAULT 0    NOT NULL, -- subpost独有, 区分 post和 subpost 的唯一标识
+    parent_id        INTEGER DEFAULT 0    NOT NULL, -- subpost独有, 区分 post和 subpost 的唯一标识. -1 代表有但是已经无法获取到了
     reply_to_id      INTEGER DEFAULT 0    NOT NULL, -- subpost独有，表示回复的用户不是回复的subpost, 因此贴吧帖子不是树状结构。
     thread_id        INTEGER              NOT NULL,
     author_id        INTEGER DEFAULT NULL NULL,

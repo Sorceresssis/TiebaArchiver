@@ -4,8 +4,8 @@ import aiotieba as tb
 from aiotieba.api.get_comments import UserInfo_c
 from aiotieba.api.get_posts import UserInfo_p
 from aiotieba.config import ProxyConfig
+from types.archive_config import PostFilter
 
-from config.archive_config import PostFilter
 from config.tieba_auth import TiebaAuth
 from utils.net import get_system_proxy
 

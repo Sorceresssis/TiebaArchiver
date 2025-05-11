@@ -1,10 +1,11 @@
 import time
 
+from types.archive_config import ArchiveConfig
+
 from api.aiotieba_api import AioTiebaPosts, get_posts
-from config.archive_config import ArchiveConfig
-from config.path_config import ThreadDataPathBuilder
 from db.content_db import ContentDB
 from model.metadata import MetaData
+from settings.path_config import ThreadDataPathBuilder
 from utils.json import json_dumps_to_file
 from utils.logger import cli_logger, ArchiveLogger
 

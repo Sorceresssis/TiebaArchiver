@@ -1,8 +1,8 @@
 import os
 
 from orjson import orjson
+from types.archive_config import ArchiveConfig
 
-from config.archive_config import ArchiveConfig
 from utils.cli_prompt import CliPrompt
 from utils.json import json_loads_from_file, json_dumps_to_file
 

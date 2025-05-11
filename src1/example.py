@@ -1,9 +1,9 @@
 import asyncio
 
 from api.aiotieba_api import get_posts
-from config.archive_config import ArchiveConfig, UserAvatarSave, PostFilter
-from config.tieba_auth import TiebaAuth
 from module.archive_thread import ArchiveThread
+from optoins.archive_config import ArchiveConfig, UserAvatarSave, PostFilter
+from config.tieba_auth import TiebaAuth
 
 
 async def archive_thread(tid: int):

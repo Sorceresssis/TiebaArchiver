@@ -1,15 +1,22 @@
+---
+---
+
+<link rel="stylesheet" href="https://sorceresssis.github.io/store/doc-css/enhance.css">
+<link rel="stylesheet" href="https://sorceresssis.github.io/store/doc-css/custom-component.css">
+<link rel="stylesheet" href="https://sorceresssis.github.io/store/doc-css/reader-adapt.css">
+
 # 贴吧数据笔记
 
 ## Post
 
-#### sign
+### sign
 
 小尾巴。
 
 1. 随着 post 发布的 sign 不会随着用户修改而改变。
 2. sign 原先是支持图片的，在 web 端可以正常显示，在移动端无法显示图片 sign。aiotieba 基于移动端 api 所以无法获取到图片 sign
 
-#### reply_num
+### reply_num
 
 回复数
 
@@ -17,7 +24,7 @@
 
 更新 archive 时，记得更新 reply_num。
 
-#### reply_to_id(被回复者)
+### reply_to_id(被回复者)
 
 回复目标用户的 ID，非树状结构
 贴吧表达被回复者有三种方式
@@ -71,9 +78,15 @@ Contents(
 
 ![1720660393315](./assets/TiebaDataNote/images/1720660393315.png)
 
+### 设备 （无）
+
+网页端会显示设备，但是移动端 api 没有设备信息。
+
+![1717232574390](./assets/TiebaDataNote/images/1717232574390.png)
+
 ## User
 
-#### IP 属地
+### IP 属地
 
 贴吧不是每个帖子都保存发布时的 ip 地址。会随着用户的 ip 改变
 
@@ -468,12 +481,6 @@ FragAT(
 ### tiebapluse
 
 我不知道这是什么东西，没见过。
-
-### 设备 （无）
-
-网页端会显示设备，但是移动端 api 没有设备信息。
-
-![1717232574390](./assets/TiebaDataNote/images/1717232574390.png)
 
 ### 自定义填字表情包
 

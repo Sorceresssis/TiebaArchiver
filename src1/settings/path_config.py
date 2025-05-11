@@ -20,9 +20,6 @@ d = 'runs/thread'
 e = 'runs/user'
 
 
-# TODO 双向文本的视觉布局可以取决于基本方向(视图|双向文本基本方向)
-
-
 class ThreadDataPathBuilder:
     DATA_FOLDER_NAME = 'archive_data'
 

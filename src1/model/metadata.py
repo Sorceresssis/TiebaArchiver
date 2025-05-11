@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 
-from __version__ import VERSION
-from config.archive_config import ArchiveConfig
+from types.archive_config import ArchiveConfig
+
+from __version__ import __version__
 
 
 @dataclass
@@ -10,6 +11,7 @@ class MetaData:
     update_time: int
     main_thread: int
     share_origin: int
+    type: str  # TODO Thread , posts,
     archive_config: ArchiveConfig = field(default_factory=ArchiveConfig)
     platform: str = 'baidu-tieba'
-    version: str = VERSION
+    version: str = __version__

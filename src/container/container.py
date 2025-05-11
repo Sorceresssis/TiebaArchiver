@@ -1,5 +1,5 @@
-from config.path_config import ScrapeDataPathBuilder
 from db.content_db import ContentDB
+from settings.path_config import ScrapeDataPathBuilder
 from utils.logger import ScrapeLogger
 
 
